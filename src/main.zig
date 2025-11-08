@@ -106,8 +106,36 @@ pub fn main() !void {
                 },
             }
             continue;
+        }
+
+        // Not a builtin - try to execute as external program
+        const allocator = std.heap.page_allocator;
+        if (try whichCommand(allocator, command_str)) |executable_path| {
+            defer allocator.free(executable_path);
+
+            // Collect all arguments into a fixed buffer
+            var args_buf: [64][]const u8 = undefined;
+            var args_count: usize = 0;
+
+            args_buf[args_count] = executable_path; // argv[0] is the full path
+            args_count += 1;
+
+            while (arg_iter.next()) |arg| {
+                args_buf[args_count] = arg;
+                args_count += 1;
+            }
+
+            const args = args_buf[0..args_count];
+
+            // Spawn and execute the external program
+            var child = std.process.Child.init(args, allocator);
+            child.stdin_behavior = .Inherit;
+            child.stdout_behavior = .Inherit;
+            child.stderr_behavior = .Inherit;
+
+            _ = try child.spawnAndWait();
         } else {
-            try stdout.print("{s}: command not found\n", .{input});
+            try stdout.print("{s}: command not found\n", .{command_str});
         }
 
         try stdout.flush();
