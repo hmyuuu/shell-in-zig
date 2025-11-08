@@ -12,6 +12,7 @@ pub fn main() !void {
         try stdout.print("$ ", .{});
         try stdout.flush();
         const input = try stdin.takeDelimiterExclusive('\n');
+        stdin.toss(1);
         try stdout.print("{s}: command not found\n", .{input});
         try stdout.flush();
     }
