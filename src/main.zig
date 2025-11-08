@@ -21,10 +21,25 @@ fn whichCommand(allocator: std.mem.Allocator, command: []const u8) !?[]u8 {
         errdefer allocator.free(full_path);
 
         // Check if file exists and has execute permissions
-        std.fs.accessAbsolute(full_path, .{ .mode = .executable }) catch {
+        const file = std.fs.openFileAbsolute(full_path, .{}) catch {
             allocator.free(full_path);
             continue;
         };
+        defer file.close();
+
+        // Get file stat to check permissions
+        const stat = file.stat() catch {
+            allocator.free(full_path);
+            continue;
+        };
+
+        // Check if file has execute permission (user, group, or other)
+        // On Unix, mode & 0o111 checks if any execute bit is set
+        const has_execute = (stat.mode & 0o111) != 0;
+        if (!has_execute) {
+            allocator.free(full_path);
+            continue;
+        }
 
         return full_path;
     }
