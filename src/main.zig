@@ -117,7 +117,7 @@ pub fn main() !void {
             var args_buf: [64][]const u8 = undefined;
             var args_count: usize = 0;
 
-            args_buf[args_count] = executable_path; // argv[0] is the full path
+            args_buf[args_count] = command_str; // argv[0] is the command name
             args_count += 1;
 
             while (arg_iter.next()) |arg| {
@@ -127,13 +127,36 @@ pub fn main() !void {
 
             const args = args_buf[0..args_count];
 
-            // Spawn and execute the external program
-            var child = std.process.Child.init(args, allocator);
-            child.stdin_behavior = .Inherit;
-            child.stdout_behavior = .Inherit;
-            child.stderr_behavior = .Inherit;
+            // Create null-terminated versions for execve
+            var argv_ptrs = try allocator.alloc(?[*:0]const u8, args_count + 1);
+            defer allocator.free(argv_ptrs);
 
-            _ = try child.spawnAndWait();
+            for (args, 0..) |arg, i| {
+                argv_ptrs[i] = try allocator.dupeZ(u8, arg);
+            }
+            argv_ptrs[args_count] = null;
+
+            const exe_path_z = try allocator.dupeZ(u8, executable_path);
+            defer allocator.free(exe_path_z);
+
+            // Fork and exec
+            const pid = try std.posix.fork();
+            if (pid == 0) {
+                // Child process - execute the program
+                std.posix.execveZ(exe_path_z, argv_ptrs[0..args_count :null], @ptrCast(std.os.environ.ptr)) catch {
+                    std.process.exit(1);
+                };
+            } else {
+                // Parent process - wait for child
+                _ = std.posix.waitpid(pid, 0);
+            }
+
+            // Clean up allocated strings
+            for (0..args_count) |i| {
+                if (argv_ptrs[i]) |ptr| {
+                    allocator.free(std.mem.span(ptr));
+                }
+            }
         } else {
             try stdout.print("{s}: command not found\n", .{command_str});
         }
