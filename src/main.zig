@@ -1,7 +1,8 @@
 const std = @import("std");
-const Command = enum {
+const Builtin = enum {
     exit,
     echo,
+    type,
     hello,
 };
 
@@ -21,7 +22,7 @@ pub fn main() !void {
         var arg_iter = std.mem.splitSequence(u8, input, " ");
 
         const command_str = arg_iter.next().?;
-        const command_opt = std.meta.stringToEnum(Command, command_str);
+        const command_opt = std.meta.stringToEnum(Builtin, command_str);
 
         if (command_opt) |command| {
             switch (command) {
@@ -43,6 +44,15 @@ pub fn main() !void {
                         }
                     }
                     try stdout.print("\n", .{});
+                },
+                .type => {
+                    const type_str = arg_iter.next().?;
+                    const type_opt = std.meta.stringToEnum(Builtin, type_str);
+                    if (type_opt) |_| {
+                        try stdout.print("{s} is a shell builtin\n", .{type_str});
+                    } else {
+                        try stdout.print("{s}: not found\n", .{type_str});
+                    }
                 },
                 .hello => {
                     try stdout.print("Hello, World!\n", .{});
