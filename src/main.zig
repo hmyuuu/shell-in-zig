@@ -14,4 +14,5 @@ pub fn main() !void {
     const input = try stdin.takeDelimiterExclusive('\n');
     try stdout.print("{s}: command not found\n", .{input});
     try stdout.flush();
+    // stdin.toss(1);
 }
