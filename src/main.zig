@@ -8,11 +8,11 @@ pub fn main() !void {
     var stdin_reader = std.fs.File.stdin().readerStreaming(&stdin_buffer);
     const stdin = &stdin_reader.interface;
 
-    try stdout.print("$ ", .{});
-    try stdout.flush();
-
-    const input = try stdin.takeDelimiterExclusive('\n');
-    try stdout.print("{s}: command not found\n", .{input});
-    try stdout.flush();
-    // stdin.toss(1);
+    while (true) {
+        try stdout.print("$ ", .{});
+        try stdout.flush();
+        const input = try stdin.takeDelimiterExclusive('\n');
+        try stdout.print("{s}: command not found\n", .{input});
+        try stdout.flush();
+    }
 }
