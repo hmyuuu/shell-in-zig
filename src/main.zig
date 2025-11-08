@@ -1,4 +1,8 @@
 const std = @import("std");
+const Command = enum {
+    exit,
+    hello,
+};
 
 pub fn main() !void {
     var stdout_buffer: [512]u8 = @splat(0);
@@ -12,8 +16,32 @@ pub fn main() !void {
         try stdout.print("$ ", .{});
         try stdout.flush();
         const input = try stdin.takeDelimiterExclusive('\n');
-        stdin.toss(1);
-        try stdout.print("{s}: command not found\n", .{input});
+        // stdin.toss(1);
+        var arg_iter = std.mem.splitSequence(u8, input, " ");
+
+        const command_str = arg_iter.next().?;
+        const command_opt = std.meta.stringToEnum(Command, command_str);
+
+        if (command_opt) |command| {
+            switch (command) {
+                .exit => {
+                    const code = if (arg_iter.next()) |code_str|
+                        try std.fmt.parseInt(u8, code_str, 10)
+                    else
+                        0;
+
+                    std.process.exit(code);
+                },
+                .hello => {
+                    try stdout.print("Hello, World!\n", .{});
+                    try stdout.flush();
+                },
+            }
+            continue;
+        } else {
+            try stdout.print("{s}: command not found\n", .{input});
+        }
+
         try stdout.flush();
     }
 }
