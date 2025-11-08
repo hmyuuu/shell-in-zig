@@ -20,14 +20,12 @@ fn whichCommand(allocator: std.mem.Allocator, command: []const u8) !?[]u8 {
         const full_path = try std.fs.path.join(allocator, &[_][]const u8{ dir, command });
         errdefer allocator.free(full_path);
 
-        // Try to access the file to check if it exists and is accessible
-        std.fs.accessAbsolute(full_path, .{ .mode = .read_only }) catch {
+        // Check if file exists and has execute permissions
+        std.fs.accessAbsolute(full_path, .{ .mode = .executable }) catch {
             allocator.free(full_path);
             continue;
         };
 
-        // If we can access it, assume it's executable (simplified check)
-        // In a real implementation, we'd check the executable bit
         return full_path;
     }
     return null;
