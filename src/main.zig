@@ -16,7 +16,7 @@ pub fn main() !void {
         try stdout.print("$ ", .{});
         try stdout.flush();
         const input = try stdin.takeDelimiterExclusive('\n');
-        // stdin.toss(1);
+        stdin.toss(1);
         var arg_iter = std.mem.splitSequence(u8, input, " ");
 
         const command_str = arg_iter.next().?;
