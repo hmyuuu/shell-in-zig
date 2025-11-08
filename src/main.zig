@@ -1,6 +1,7 @@
 const std = @import("std");
 const Command = enum {
     exit,
+    echo,
     hello,
 };
 
@@ -31,6 +32,17 @@ pub fn main() !void {
                         0;
 
                     std.process.exit(code);
+                },
+                .echo => {
+                    while (true) {
+                        const word = arg_iter.next();
+                        if (word) |w| {
+                            try stdout.print("{s} ", .{w});
+                        } else {
+                            break;
+                        }
+                    }
+                    try stdout.print("\n", .{});
                 },
                 .hello => {
                     try stdout.print("Hello, World!\n", .{});
